@@ -1,0 +1,58 @@
+Sistem Warehouse Management System (WMS) profesional berbasis Laravel, dirancang untuk kebutuhan pergudangan multi-lokasi: penerimaan barang dari supplier lengkap dengan inspeksi Quality Control, penempatan rak otomatis, transfer stok antar gudang, stock opname dengan alur pembekuan-dan-penyesuaian yang aman, hingga proses pengiriman ke customer lengkap dengan picking list bergerak rute rak terdekat dan surat jalan siap cetak semua dengan pencatatan stok real-time menggunakan metode penilaian FIFO maupun Average Costing yang bisa dipilih per produk.
+
+Sistem ini dirancang untuk bisnis skala kecil-menengah yang mengelola satu atau lebih gudang dan ingin meninggalkan pencatatan stok manual atau spreadsheet, beralih ke platform yang akurat secara stok dan dapat diaudit, serta bisa diakses oleh seluruh tim (admin, warehouse manager, purchasing, hingga picker/staf lapangan) sesuai hak akses masing-masing.
+Cara kerja
+Setiap penerimaan barang dari Purchase Order wajib melalui proses Receiving & Quality Control per item jumlah yang lolos QC otomatis membentuk batch stok baru (dengan tanggal kedaluwarsa jika ada) dan ditempatkan ke rak pilihan (putaway), sementara jumlah yang ditolak tercatat terpisah tanpa pernah menambah stok sistem. Pengeluaran stok baik untuk penjualan, transfer, maupun penyesuaian selalu mengikuti metode FIFO (batch dengan tanggal kedaluwarsa/tanggal terima paling awal dikonsumsi lebih dulu), sementara pembebanan biaya per unit mengikuti metode costing yang dipilih pada masing-masing produk: FIFO (biaya per batch) atau Average (biaya rata-rata tertimbang yang diperbarui otomatis setiap kali ada penerimaan).
+
+Stock Opname mengikuti alur ketat agar tidak ada perubahan data yang tidak disengaja: bekukan stok sistem (freeze) untuk mengambil snapshot jumlah tercatat → input hasil hitung fisik per produk → selesaikan opname. Selisih (varians) baru benar-benar disesuaikan ke stok dan tercatat di ledger serta audit log tepat pada saat opname diselesaikan, bukan saat angka fisik diketik.
+
+Di sisi penjualan, Sales Order yang telah dikonfirmasi dapat langsung diterbitkan menjadi Picking List — sistem otomatis menempatkan setiap item pesanan ke rak sumber stoknya (mengikuti urutan FIFO yang sama) dan mengurutkan seluruh baris berdasarkan kode rak sehingga picker berjalan satu arah tanpa bolak-balik gudang. Begitu picking diselesaikan, stok berkurang otomatis dan status pesanan berpindah ke "Dikemas", siap diteruskan menjadi Surat Jalan (Delivery Order) yang bisa langsung dicetak lengkap dengan data driver, kendaraan, dan kolom tanda tangan serah terima.
+
+Seluruh pergerakan stok masuk, keluar, transfer, maupun penyesuaian — tercatat permanen sebagai stock ledger, dan setiap aksi penting (penyesuaian manual, penyelesaian opname) tercatat di Audit Log lengkap dengan pelaku dan waktunya. Admin mengatur akses tim lewat role granular: Admin, Warehouse Manager, Purchasing, dan Picker/Field Staff.
+Fitur
+Dashboard dengan KPI real-time: total SKU aktif, valuasi stok, peringatan stok rendah, dan stok kosong
+Grafik pergerakan stok masuk vs keluar 7 hari terakhir
+Tabel pergerakan stok terbaru dengan pencarian dan filter multi-gudang
+Manajemen Multi-Gudang dan Lokasi Rak (zona, lorong, baris, level, kapasitas)
+Manajemen Produk multi-satuan dengan konversi otomatis dan barcode auto-generate
+Manajemen Kategori Produk dengan struktur induk-anak
+Manajemen Supplier dan Customer dalam satu halaman bertab
+Purchase Order dengan item dinamis dan alur status draft → dipesan → diterima
+Receiving & Quality Control per item: qty lolos QC dan ditolak, dengan penempatan rak otomatis membentuk batch baru
+Stock Batch & Expiry Tracking untuk pelacakan tanggal kedaluwarsa per batch
+Metode penilaian stok FIFO dan Average Costing yang dapat dipilih per produk
+Stock Transfer antar gudang secara atomic dengan pencatatan ledger di kedua sisi
+Stock Opname dengan alur freeze → hitung fisik → selesaikan, penyesuaian otomatis ke ledger dan audit log
+Sales Order dengan item dinamis dan alur status draft → dikonfirmasi → picking → dikemas → dikirim
+Picking List otomatis dengan urutan rute rak terdekat
+Delivery Order (Surat Jalan) siap cetak lengkap dengan driver, kendaraan, dan kolom tanda tangan
+Quick Stock Adjustment dan Transfer langsung dari halaman Manajemen Stok
+Indikator visual level stok: progress bar dan badge status sehat/rendah/kosong/overstock
+Role & Permission granular (Admin, Warehouse Manager, Purchasing, Picker/Field Staff)
+Audit Log untuk seluruh transaksi stok dan aktivitas penting sistem
+Autentikasi lengkap: login, registrasi, lupa password, reset password, verifikasi email
+UI modern, ringan, dan cepat menggunakan Livewire 3 + Tailwind CSS v4 + Alpine.js
+Panduan instalasi
+Install dependency PHP dan JavaScript
+composer install
+npm install
+Salin file environment dan generate application key
+cp .env.example .env
+php artisan key:generate
+Edit .env, isi DB_DATABASE, DB_USERNAME, DB_PASSWORD sesuai server MySQL Anda.
+
+Buat database MySQL
+CREATE DATABASE inventory_wms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+Jalankan migrasi & seeder (membuat seluruh tabel + data demo: 2 gudang, 18 rak, 5 kategori, 20 produk, supplier, customer, dan 4 user demo dengan role berbeda)
+php artisan migrate --seed
+Compile asset frontend
+npm run build
+Jalankan server
+php artisan serve
+Akses aplikasi di http://localhost:8000
+
+Login menggunakan salah satu akun demo berikut (password sama untuk semua akun):
+
+Role semua passwordnya menggunakan (password) Admin : admin@wms.test Warehouse Manager : manager@wms.test Purchasing : purchasing@wms.test Picker : picker@wms.test
+
+Catatan: aplikasi ini memakai MySQL sebagai database, sehingga wajib menjalankan langkah migrasi & seeder di atas sebelum bisa digunakan. Untuk penggunaan produksi, disarankan mengganti seluruh password demo dan menonaktifkan akun demo yang tidak diperlukan lewat menu Supplier & Customer / User Management setelah login pertama.
